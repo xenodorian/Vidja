@@ -1,0 +1,42 @@
+name: Bootstrap ComfyUI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Current_Work.md'
+      - '.github/workflows/bootstrap-comfyui.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  bootstrap:
+    if: github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[comfy-bootstrap]')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Vidja
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Clone official ComfyUI
+        run: |
+          git clone --depth 1 https://github.com/Comfy-Org/ComfyUI.git /tmp/ComfyUI
+
+      - name: Copy ComfyUI source
+        run: |
+          rsync -a --delete             --exclude='.git/'             --exclude='.github/'             --exclude='Current_Work.md'             /tmp/ComfyUI/ ./
+
+      - name: Preserve project handoff file
+        run: |
+          test -f Current_Work.md
+
+      - name: Commit ComfyUI source
+        run: |
+          git config user.name "Vidja Build Agent"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -m "Bootstrap ComfyUI source [comfy-bootstrap]" || echo "No changes to commit"
+          git push origin HEAD:main

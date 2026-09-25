@@ -27,6 +27,11 @@ jobs:
         run: |
           rsync -a --delete             --exclude='.git/'             --exclude='.github/'             --exclude='Current_Work.md'             /tmp/ComfyUI/ ./
 
+      - name: Add ComfyUI-GGUF custom node
+        run: |
+          rm -rf custom_nodes/ComfyUI-GGUF
+          git clone --depth 1 https://github.com/city96/ComfyUI-GGUF.git custom_nodes/ComfyUI-GGUF
+
       - name: Preserve project handoff file
         run: |
           test -f Current_Work.md

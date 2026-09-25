@@ -59,15 +59,15 @@ The official ComfyUI repository currently uses `master` as its default branch.
 ### Not Yet Completed
 
 - [x] Transfer the ComfyUI source into Vidja.
-- [ ] Determine the exact video-generation workflow to package.
-- [ ] Download all required model files.
-- [ ] Install/configure required dependencies.
-- [ ] Install/configure required custom nodes.\n  - Planned: city96/ComfyUI-GGUF for the selected Wan GGUF workflow. Source integration is staged in the bootstrap workflow but runtime installation/testing is not yet complete.
-- [ ] Create the working workflow JSON.
+- [x] Determine the exact video-generation workflow to package.\n  - Selected starting target: Wan 2.1 T2V 1.3B GGUF, Q4_K_S diffusion model + UMT5 XXL Q3_K_S text encoder.\n  - Rationale: substantially smaller than 14B-class Wan workflows and more appropriate for an RTX 3060 12GB target.
+- [ ] Download all required model files.\n  - Exact URLs and destinations are recorded in `VIDJA_ASSETS.json`.\n  - Model binaries are intentionally not committed to GitHub because of repository/storage constraints.
+- [ ] Install/configure required dependencies.\n  - The setup script installs `custom_nodes/ComfyUI-GGUF/requirements.txt` into the embedded portable Python environment.
+- [x] Install/configure required custom nodes.\n  - `city96/ComfyUI-GGUF` is vendored into `custom_nodes/ComfyUI-GGUF` and the setup script installs its Python requirements.\n  - Runtime import has not yet been tested in the portable Windows environment.
+- [x] Create the working workflow JSON.\n  - File: `workflows/wan2.1_t2v_1.3b_gguf_3060.json`.\n  - Target graph uses `UnetLoaderGGUF`, `CLIPLoaderGGUF`, Wan VAE, KSampler, and ComfyUI video output nodes.\n  - Current graph is configured for 832x480, 33 frames, 16 FPS, 30 steps, CFG 6.
 - [ ] Execute the workflow.
 - [ ] Debug all failures.
 - [ ] Produce a successful test output.
-- [ ] Create the Windows launcher.
+- [x] Create automated Windows setup/launcher scripts.\n  - `Setup_Vidja_Windows.bat` downloads the official portable NVIDIA runtime, copies Vidja into it, installs ComfyUI-GGUF dependencies, and downloads the exact model assets.\n  - `Package_Vidja.bat` creates a single ZIP after setup.
 - [ ] Create final documentation.
 - [ ] Assemble the complete distributable directory.
 - [ ] Compress it into one ZIP.
@@ -294,9 +294,10 @@ Verification:
 - Local container access cannot reach GitHub and has no authenticated GitHub CLI, so GitHub Actions is being used as the transfer mechanism.
 
 Current blocker:
-- The ComfyUI source transfer is now verified through GitHub Actions. Runtime installation and end-to-end generation remain untested.
+- GitHub-hosted runners do not provide a standard NVIDIA GPU for this test. The repository now contains an automated Windows setup path, but actual GPU generation remains unverified until a suitable RTX test environment is available.
 
 First unfinished task:
 Verify or trigger the bootstrap workflow and confirm that the real ComfyUI source appears in Vidja. If Actions cannot be triggered through the available connector, find another authenticated transfer mechanism before attempting model/runtime packaging.
 
 Do not proceed to final packaging until the actual ComfyUI runtime and at least one complete generation workflow have been successfully tested.
+\n## Stage 2 Handoff: Runtime and Workflow Preparation\n\nCompleted:\n- Selected Wan 2.1 T2V 1.3B GGUF as the initial target.\n- Added the working workflow JSON.\n- Vendored ComfyUI-GGUF.\n- Added exact asset manifest.\n- Added automated Windows setup and one-command ZIP packaging scripts.\n- Verified current ComfyUI model-path mappings and the GGUF loader behavior against the current source.\n\nNot completed:\n- Portable Windows runtime has not yet been executed from the assembled package.\n- Model downloads have not been executed in this environment.\n- No actual Wan video has been generated.\n- RTX 3060 VRAM usage and generation time have not been empirically measured.\n- Final ZIP has not been produced.\n\nNext exact actions:\n1. Run `Setup_Vidja_Windows.bat` on a Windows environment with network access.\n2. Confirm embedded Python starts ComfyUI.\n3. Confirm ComfyUI-GGUF loads without import errors.\n4. Confirm all three model files appear in the expected loaders.\n5. Load `workflows/wan2.1_t2v_1.3b_gguf_3060.json`.\n6. Execute a short test generation first, preferably reducing frame count if VRAM requires it.\n7. Record the exact error if it fails.\n8. Iterate on the workflow until an actual video is produced.\n9. Run `Package_Vidja.bat` only after successful generation and clean the package of temporary files.\n

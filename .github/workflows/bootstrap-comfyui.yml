@@ -33,6 +33,7 @@ jobs:
         run: |
           rm -rf custom_nodes/ComfyUI-GGUF
           git clone --depth 1 https://github.com/city96/ComfyUI-GGUF.git custom_nodes/ComfyUI-GGUF
+          rm -rf custom_nodes/ComfyUI-GGUF/.git
 
       - name: Preserve project handoff file
         run: |
@@ -43,6 +44,7 @@ jobs:
           git config user.name "Vidja Build Agent"
           git config user.email "actions@users.noreply.github.com"
           git add -A
+          git add -f custom_nodes/ComfyUI-GGUF
           if git diff --cached --quiet; then
             echo "ComfyUI source is already current; nothing to commit."
             exit 0

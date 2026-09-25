@@ -25,7 +25,9 @@ jobs:
 
       - name: Copy ComfyUI source
         run: |
-          rsync -a --delete             --exclude='.git/'             --exclude='.github/'             --exclude='Current_Work.md'             /tmp/ComfyUI/ ./
+          rsync -a --delete             --exclude='.git/'             --exclude='.github/'             --exclude='Current_Work.md' \
+            --exclude='workflows/' \
+            --exclude='custom_nodes/ComfyUI-GGUF/'             /tmp/ComfyUI/ ./
 
       - name: Add ComfyUI-GGUF custom node
         run: |

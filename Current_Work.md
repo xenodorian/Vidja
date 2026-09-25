@@ -280,7 +280,7 @@ When taking over this project:
 
 ## Current Handoff
 
-Status: Phase 1 bootstrap automation added.
+Status: Phase 1 bootstrap automation added. A first GitHub Actions bootstrap run successfully cloned and copied 1,154 ComfyUI files but failed only at the final push because this handoff file was updated concurrently. The bootstrap workflow has since been simplified to avoid that race.
 
 Completed in this stage:
 - Added `.github/workflows/bootstrap-comfyui.yml`.

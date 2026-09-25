@@ -301,3 +301,28 @@ Verify or trigger the bootstrap workflow and confirm that the real ComfyUI sourc
 
 Do not proceed to final packaging until the actual ComfyUI runtime and at least one complete generation workflow have been successfully tested.
 \n## Stage 2 Handoff: Runtime and Workflow Preparation\n\nCompleted:\n- Selected Wan 2.1 T2V 1.3B GGUF as the initial target.\n- Added the working workflow JSON.\n- Vendored ComfyUI-GGUF.\n- Added exact asset manifest.\n- Added automated Windows setup and one-command ZIP packaging scripts.\n- Verified current ComfyUI model-path mappings and the GGUF loader behavior against the current source.\n\nNot completed:\n- Portable Windows runtime has not yet been executed from the assembled package.\n- Model downloads have not been executed in this environment.\n- No actual Wan video has been generated.\n- RTX 3060 VRAM usage and generation time have not been empirically measured.\n- Final ZIP has not been produced.\n\nNext exact actions:\n1. Run `Setup_Vidja_Windows.bat` on a Windows environment with network access.\n2. Confirm embedded Python starts ComfyUI.\n3. Confirm ComfyUI-GGUF loads without import errors.\n4. Confirm all three model files appear in the expected loaders.\n5. Load `workflows/wan2.1_t2v_1.3b_gguf_3060.json`.\n6. Execute a short test generation first, preferably reducing frame count if VRAM requires it.\n7. Record the exact error if it fails.\n8. Iterate on the workflow until an actual video is produced.\n9. Run `Package_Vidja.bat` only after successful generation and clean the package of temporary files.\n
+
+## Stage 3 Update: Autonomous Windows Setup
+
+The user explicitly rejected the previous manual multi-step setup procedure.
+
+Implemented:
+- `Setup_Vidja_Windows.bat` is now the single intended user-facing setup action.
+- The BAT downloads an isolated Python 3.13 bootstrap automatically, so a separate system Python installation is not required.
+- `vidja_setup.py` autonomously downloads the official NVIDIA ComfyUI portable runtime.
+- It installs ComfyUI-GGUF.
+- It downloads and SHA256-verifies the three required model files.
+- It copies the included Wan workflow into the portable runtime.
+- It starts ComfyUI automatically.
+- It submits a real Wan GPU smoke-test workflow through the ComfyUI HTTP API and waits for completion.
+- It verifies that a video output was actually produced.
+- After successful generation, it automatically creates `Vidja_ComfyUI_Ready.zip` containing the tested runtime and model files.
+- It opens the ComfyUI web UI and leaves the server running.
+- Setup diagnostics are written to `Vidja_Setup.log` and `Vidja_ComfyUI.log`.
+- `Package_Vidja.bat` remains available as a manual repackaging command, but it is no longer required after successful setup.
+
+Important:
+- The automatic test is intentionally 832x480, 9 frames, 4 steps. It validates the complete model-loading and GPU-generation pipeline without requiring the full 33-frame render.
+- The full 832x480, 33-frame, 30-step workflow remains unverified until it is actually run on the target NVIDIA hardware.
+- The final ZIP is now produced automatically after the smoke test. It is not yet present in GitHub because model binaries and the generated ZIP are produced on the Windows execution machine rather than committed to the repository.
+- No claim of successful RTX 3060 generation should be made until the new autonomous setup has been run on real NVIDIA hardware.

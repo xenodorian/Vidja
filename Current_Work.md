@@ -58,7 +58,7 @@ The official ComfyUI repository currently uses `master` as its default branch.
 
 ### Not Yet Completed
 
-- [ ] Transfer the ComfyUI source into Vidja.
+- [x] Transfer the ComfyUI source into Vidja.
 - [ ] Determine the exact video-generation workflow to package.
 - [ ] Download all required model files.
 - [ ] Install/configure required dependencies.
@@ -280,7 +280,7 @@ When taking over this project:
 
 ## Current Handoff
 
-Status: Phase 1 bootstrap automation added. A first GitHub Actions bootstrap run successfully cloned and copied 1,154 ComfyUI files but failed only at the final push because this handoff file was updated concurrently. The bootstrap workflow has since been simplified to avoid that race. The workflow now rebases against the current remote main immediately before pushing the imported source.
+Status: Phase 1 ComfyUI source transfer completed. A first GitHub Actions bootstrap run successfully cloned and copied 1,154 ComfyUI files but failed only at the final push because this handoff file was updated concurrently. The bootstrap workflow has since been simplified to avoid that race. The workflow now rebases against the current remote main immediately before pushing the imported source.
 
 Completed in this stage:
 - Added `.github/workflows/bootstrap-comfyui.yml`.
@@ -294,7 +294,7 @@ Verification:
 - Local container access cannot reach GitHub and has no authenticated GitHub CLI, so GitHub Actions is being used as the transfer mechanism.
 
 Current blocker:
-- The repository currently reports zero GitHub Actions workflow runs. The bootstrap workflow therefore has not yet been verified as executing.
+- The ComfyUI source transfer is now verified through GitHub Actions. Runtime installation and end-to-end generation remain untested.
 
 First unfinished task:
 Verify or trigger the bootstrap workflow and confirm that the real ComfyUI source appears in Vidja. If Actions cannot be triggered through the available connector, find another authenticated transfer mechanism before attempting model/runtime packaging.

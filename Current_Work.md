@@ -62,7 +62,7 @@ The official ComfyUI repository currently uses `master` as its default branch.
 - [ ] Determine the exact video-generation workflow to package.
 - [ ] Download all required model files.
 - [ ] Install/configure required dependencies.
-- [ ] Install/configure required custom nodes.
+- [ ] Install/configure required custom nodes.\n  - Planned: city96/ComfyUI-GGUF for the selected Wan GGUF workflow. Source integration is staged in the bootstrap workflow but runtime installation/testing is not yet complete.
 - [ ] Create the working workflow JSON.
 - [ ] Execute the workflow.
 - [ ] Debug all failures.

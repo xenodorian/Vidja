@@ -1,437 +1,465 @@
-<div align="center">
+# Vidja: Build a Self-Contained ComfyUI Video Generator
 
-# ComfyUI
-**The most powerful and modular AI engine for content creation.**
+## Objective
 
+The objective of this repository is to produce **one Windows ZIP file that can be extracted and run locally to generate video with ComfyUI**, without requiring you to manually install Python, ComfyUI, custom nodes, or model files.
 
-[![Website][website-shield]][website-url]
-[![Dynamic JSON Badge][discord-shield]][discord-url]
-[![Twitter][twitter-shield]][twitter-url]
-[![Matrix][matrix-shield]][matrix-url]
-<br>
-[![][github-release-shield]][github-release-link]
-[![][github-release-date-shield]][github-release-link]
-[![][github-downloads-shield]][github-downloads-link]
-[![][github-downloads-latest-shield]][github-downloads-link]
+The target configuration is an NVIDIA RTX 3060 12GB with 32 GB RAM.
 
-[matrix-shield]: https://img.shields.io/badge/Matrix-000000?style=flat&logo=matrix&logoColor=white
-[matrix-url]: https://app.element.io/#/room/%23comfyui_space%3Amatrix.org
-[website-shield]: https://img.shields.io/badge/ComfyOrg-4285F4?style=flat
-[website-url]: https://www.comfy.org/
-<!-- Workaround to display total user from https://github.com/badges/shields/issues/4500#issuecomment-2060079995 -->
-[discord-shield]: https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fdiscord.com%2Fapi%2Finvites%2Fcomfyorg%3Fwith_counts%3Dtrue&query=%24.approximate_member_count&logo=discord&logoColor=white&label=Discord&color=green&suffix=%20total
-[discord-url]: https://discord.com/invite/comfyorg
-[twitter-shield]: https://img.shields.io/twitter/follow/ComfyUI
-[twitter-url]: https://x.com/ComfyUI
+The intended final package must contain:
 
-[github-release-shield]: https://img.shields.io/github/v/release/comfyanonymous/ComfyUI?style=flat&sort=semver
-[github-release-link]: https://github.com/comfyanonymous/ComfyUI/releases
-[github-release-date-shield]: https://img.shields.io/github/release-date/comfyanonymous/ComfyUI?style=flat
-[github-downloads-shield]: https://img.shields.io/github/downloads/comfyanonymous/ComfyUI/total?style=flat
-[github-downloads-latest-shield]: https://img.shields.io/github/downloads/comfyanonymous/ComfyUI/latest/total?style=flat&label=downloads%40latest
-[github-downloads-link]: https://github.com/comfyanonymous/ComfyUI/releases
+- ComfyUI
+- A portable Python/runtime environment
+- Required dependencies
+- ComfyUI-GGUF
+- The required Wan 2.1 model files
+- A working Wan 2.1 text-to-video workflow
+- Windows launch/setup scripts
+- Documentation
+- No dependence on the developer's original machine paths
 
-<img width="1590" height="795" alt="ComfyUI Screenshot" src="https://github.com/user-attachments/assets/36e065e0-bfae-4456-8c7f-8369d5ea48a2" />
-<br>
-</div>
+**Important:** The project is not complete until the packaged workflow has actually generated a playable video on the target hardware.
 
-ComfyUI is the AI creation engine for visual professionals who demand control over every model, every parameter, and every output. Its powerful and modular node graph interface empowers creatives to generate images, videos, 3D models, audio, and more...
-- ComfyUI natively supports the latest open-source state of the art models.
-- [Partner nodes](https://docs.comfy.org/tutorials/partner-nodes/overview#partner-nodes) provide access to the best closed source models such as Nano Banana, Seedance, Hunyuan3D, etc.
-- It is available on Windows, Linux, and macOS, locally with our [desktop application](https://www.comfy.org/download), our [portable install](#installing) or on our [cloud](https://www.comfy.org/cloud).
-- The most sophisticated workflows can be exposed through a simple UI thanks to App Mode.
-- It integrates seamlessly into production pipelines with our API endpoints.
+---
 
-## Get Started
+## Current Workflow
 
-### Local
+The initial target is:
 
-#### [Desktop Application](https://www.comfy.org/download)
-- The easiest way to get started.
-- Available on Windows & macOS.
+**Wan 2.1 T2V 1.3B**
 
-#### [Manual Install](#manual-install-windows-linux)
-Supports all operating systems and GPU types (NVIDIA, AMD, Intel, Apple Silicon, Ascend).
+The workflow uses:
 
-### Cloud
+- Wan 2.1 T2V 1.3B GGUF, Q4_K_S
+- UMT5 XXL GGUF, Q3_K_S
+- Wan 2.1 VAE
+- ComfyUI-GGUF
+- 832x480 output
+- 33 frames
+- 16 FPS
+- 30 sampling steps
+- CFG 6
 
-#### [Comfy Cloud](https://www.comfy.org/cloud)
-- Our official paid cloud version for those who can't afford local hardware.
+The workflow is:
 
-## Examples
-See what ComfyUI can do with the [newer template workflows](https://comfy.org/workflows) or old [example workflows](https://comfyanonymous.github.io/ComfyUI_examples/).
-
-## Features
-- A visual node graph for building and reusing image, video, audio, 3D, and text workflows without code.
-- Reusable subgraphs, workflow templates, App Mode, and a local API for integrating workflows into applications.
-- Efficient local execution with asynchronous queueing, partial graph re-execution, smart VRAM and RAM management, model offloading, and support for quantized models.
-- Broad native model support. This is a representative list; browse the [workflow library](https://comfy.org/workflows/) for maintained, ready-to-run templates.
-  - [Image generation](https://comfy.org/workflows/tag/text-to-image/): Stable Diffusion 1.5, SDXL, SD3.5, Flux.1, Flux.2, Qwen Image, Z-Image, Hunyuan Image 2.1, HiDream, Lumina Image 2.0, Chroma, Anima, LongCat Image, Ideogram 4, Krea 2, MageFlow, Microsoft Lens, PixelDiT, Kandinsky 5, and Ernie Image.
-  - [Image editing](https://comfy.org/workflows/tag/image-edit/): Flux Kontext, Flux.2 Klein, Qwen Image Edit, HiDream E1.1 and O1, OmniGen2, Boogu, JoyImage Edit, MageFlow Edit, and LongCat Image Edit.
-  - [Video generation](https://comfy.org/workflows/tag/video-generation/): Wan 2.1 and 2.2, LTX-Video 2 and 2.3, HunyuanVideo 1.5, Kandinsky 5 Video, CogVideoX, Cosmos Predict2, Bernini-R, SCAIL 2, and Mochi.
-  - [Audio and video generation](https://comfy.org/workflows/): MiniMax H3 and LTX-AV.
-  - [Audio generation](https://comfy.org/workflows/tag/text-to-audio/): ACE-Step 1.5, Stable Audio 3, MiniMax Music 3 and Yue 2.
-  - [3D and vision](https://comfy.org/workflows/): Hunyuan3D 2.1, TripoSplat, SeedVR2, SUPIR, Depth Anything 3, MoGe, SAM 3 and 3.1, RT-DETRv4, and BiRefNet.
-  - [Text generation](https://comfy.org/workflows/tag/text-generation/): Gemma 3 and 4, Qwen3, Qwen3.5, and Qwen3-VL, including multimodal inputs.
-- Load complete checkpoints or separate diffusion models, VAEs, text encoders, LoRAs, ControlNets, adapters, and upscalers from supported model formats.
-- Built-in tools for inpainting, outpainting, reference conditioning, masks and compositing, model merging, upscaling, frame interpolation, segmentation, depth estimation, and media processing.
-- Save and load workflows as JSON, or recover complete workflows and seeds from supported generated media.
-- Runs fully offline: core does not download anything unless you request it. Use `--disable-api-nodes` to disable the optional paid [Comfy API nodes](https://docs.comfy.org/tutorials/api-nodes/overview) and force all built-in functionality to stay offline.
-- Extend ComfyUI with custom nodes
-- Configure additional model locations with [`extra_model_paths.yaml`](extra_model_paths.yaml.example).
-- Support for saving and loading high bit depth images and videos: 16 bit PNG images, 32 bit EXR, 10 bit AVIF are supported and more.
-- Support for saving and loading HDR videos and images in various formats.
-
-
-## Release Process
-
-ComfyUI follows a weekly release cycle targeting Monday but this regularly changes because of model releases or large changes to the codebase. There are three interconnected repositories:
-
-1. **[ComfyUI Core](https://github.com/comfyanonymous/ComfyUI)**
-   - Releases a new major stable version (e.g., v0.7.0) roughly every 2 weeks.
-   - Starting from v0.4.0 patch versions will be used for fixes backported onto the current stable release.
-   - Minor versions will be used for releases off the master branch.
-   - Patch versions may still be used for releases on the master branch in cases where a backport would not make sense.
-   - Commits outside of the stable release tags may be very unstable and break many custom nodes.
-   - Serves as the foundation for the desktop release
-
-2. **[Comfy Desktop](https://github.com/Comfy-Org/Comfy-Desktop)**
-   - Builds a new release using the latest stable core version
-
-3. **[ComfyUI Frontend](https://github.com/Comfy-Org/ComfyUI_frontend)**
-   - Every 2+ weeks frontend updates are merged into the core repository
-   - Features are frozen for the upcoming core release
-   - Development continues for the next release cycle
-
-## Shortcuts
-
-| Keybind                            | Explanation                                                                                                        |
-|------------------------------------|--------------------------------------------------------------------------------------------------------------------|
-| `Ctrl` + `Enter`                      | Queue up current graph for generation                                                                              |
-| `Ctrl` + `Shift` + `Enter`              | Queue up current graph as first for generation                                                                     |
-| `Ctrl` + `Alt` + `Enter`                | Cancel current generation                                                                                          |
-| `Ctrl` + `Z`/`Ctrl` + `Y`                 | Undo/Redo                                                                                                          |
-| `Ctrl` + `S`                          | Save workflow                                                                                                      |
-| `Ctrl` + `O`                          | Load workflow                                                                                                      |
-| `Ctrl` + `A`                          | Select all nodes                                                                                                   |
-| `Alt `+ `C`                           | Collapse/uncollapse selected nodes                                                                                 |
-| `Ctrl` + `M`                          | Mute/unmute selected nodes                                                                                         |
-| `Ctrl` + `B`                           | Bypass selected nodes (acts like the node was removed from the graph and the wires reconnected through)            |
-| `Delete`/`Backspace`                   | Delete selected nodes                                                                                              |
-| `Ctrl` + `Backspace`                   | Delete the current graph                                                                                           |
-| `Space`                              | Move the canvas around when held and moving the cursor                                                             |
-| `Ctrl`/`Shift` + `Click`                 | Add clicked node to selection                                                                                      |
-| `Ctrl` + `C`/`Ctrl` + `V`                  | Copy and paste selected nodes (without maintaining connections to outputs of unselected nodes)                     |
-| `Ctrl` + `C`/`Ctrl` + `Shift` + `V`          | Copy and paste selected nodes (maintaining connections from outputs of unselected nodes to inputs of pasted nodes) |
-| `Shift` + `Drag`                       | Move multiple selected nodes at the same time                                                                      |
-| `Ctrl` + `D`                           | Load default graph                                                                                                 |
-| `Alt` + `+`                          | Canvas Zoom in                                                                                                     |
-| `Alt` + `-`                          | Canvas Zoom out                                                                                                    |
-| `Ctrl` + `Shift` + LMB + Vertical drag | Canvas Zoom in/out                                                                                                 |
-| `P`                                  | Pin/Unpin selected nodes                                                                                           |
-| `Ctrl` + `G`                           | Group selected nodes                                                                                               |
-| `Q`                                 | Toggle visibility of the queue                                                                                     |
-| `H`                                  | Toggle visibility of history                                                                                       |
-| `R`                                  | Refresh graph                                                                                                      |
-| `F`                                  | Show/Hide menu                                                                                                      |
-| `.`                                  | Fit view to selection (Whole graph when nothing is selected)                                                        |
-| Double-Click LMB                   | Open node quick search palette                                                                                     |
-| `Shift` + Drag                       | Move multiple wires at once                                                                                        |
-| `Ctrl` + `Alt` + LMB                   | Disconnect all wires from clicked slot                                                                             |
-
-`Ctrl` can also be replaced with `Cmd` instead for macOS users
-
-# Installing
-
-## Windows and Mac
-
-We highly recommend using the [desktop app](https://comfy.org/download):
-
-### [Link to Download](https://comfy.org/download)
-
-The desktop app is the easiest and best way to use ComfyUI for new users.
-
-## Windows Portable
-
-There is a portable standalone build for Windows that should work for running on Nvidia GPUs or for running on your CPU only. It is not recommended for regular users. Regular users should use the desktop app above.
-
-[Direct link to download (nvidia)](https://github.com/comfyanonymous/ComfyUI/releases/latest/download/ComfyUI_windows_portable_nvidia.7z)
-
-Simply download, extract with [7-Zip](https://7-zip.org) or with the windows explorer on recent windows versions and run. For smaller models you normally only need to put the checkpoints (the huge ckpt/safetensors files) in: ComfyUI\models\checkpoints but many of the larger models have multiple files. Make sure to follow the instructions to know which subfolder to put them in ComfyUI\models\
-
-If you have trouble extracting it, right click the file -> properties -> unblock
-
-The portable above currently comes with python 3.13 and pytorch cuda 13.0. Update your Nvidia drivers if it doesn't start.
-
-#### All Official Portable Downloads:
-
-[Portable for AMD GPUs](https://github.com/comfyanonymous/ComfyUI/releases/latest/download/ComfyUI_windows_portable_amd.7z)
-
-[Portable for Intel GPUs](https://github.com/comfyanonymous/ComfyUI/releases/latest/download/ComfyUI_windows_portable_intel.7z)
-
-[Portable for Nvidia GPUs](https://github.com/comfyanonymous/ComfyUI/releases/latest/download/ComfyUI_windows_portable_nvidia.7z) (supports 20 series and above).
-
-[Portable for Nvidia GPUs with pytorch cuda 12.6 and python 3.12](https://github.com/comfyanonymous/ComfyUI/releases/latest/download/ComfyUI_windows_portable_nvidia_cu126.7z) (Supports Nvidia 10 series and older GPUs, DO NOT USE THIS ON NEWER 20 SERIES AND ABOVE GPUS).
-
-#### How do I share models between another UI and ComfyUI?
-
-See the [Config file](extra_model_paths.yaml.example) to set the search paths for models. In the standalone windows build you can find this file in the ComfyUI directory. Rename this file to extra_model_paths.yaml and edit it with your favorite text editor.
-
-
-## [comfy-cli](https://docs.comfy.org/comfy-cli/getting-started)
-
-You can install and start ComfyUI using comfy-cli:
-```bash
-pip install comfy-cli
-comfy install
+```
+Text prompt
+    ↓
+UMT5 text encoder
+    ↓
+Wan 2.1 T2V 1.3B
+    ↓
+KSampler
+    ↓
+Wan VAE
+    ↓
+Video
 ```
 
-## Manual Install (Windows, Linux)
+The workflow file is:
 
-Python 3.14 works but some custom nodes may have issues. The free threaded variant works but some dependencies will enable the GIL so it's not fully supported.
+`workflows/wan2.1_t2v_1.3b_gguf_3060.json`
 
-Python 3.13 is very well supported. If you have trouble with some custom node dependencies on 3.13 you can try 3.12
+The current workflow has **not yet been proven end-to-end on an RTX 3060**. Do not treat the presence of the JSON as proof that generation works.
 
-torch 2.7 is minimally supported but using a newer version is extremely recommended. Using a cu130 or above version of pytorch is required on Nvidia 20 series and above. Some features and optimizations might only work on newer versions. We generally recommend using the latest major version of pytorch with the latest cuda version unless it is less than 2 weeks old. If your pytorch is more than 6 months old, please update it.
+---
 
-### Instructions:
+# What You Need To Do
 
-Git clone this repo.
+The fastest path to the final ZIP is:
 
-Put your SD checkpoints (the huge ckpt/safetensors files) in: models/checkpoints
+1. Prepare the Windows machine.
+2. Run the Vidja setup script.
+3. Let it download the ComfyUI runtime and model files.
+4. Start ComfyUI.
+5. Load the included Wan workflow.
+6. Generate a short test video.
+7. Fix any errors.
+8. Repeat until a real video is produced.
+9. Run the packaging script.
+10. Extract the resulting ZIP into a separate directory and test it again.
+11. Only then consider the package complete.
 
-Put your VAE in: models/vae
+---
 
+# Step 1: Get the Repository
 
-### AMD GPUs (Linux)
+Clone or download this repository onto the Windows machine that will actually run the model.
 
-AMD users can install rocm and pytorch with pip if you don't have it already installed, this is the command to install the stable version:
+The repository is:
 
-```pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm7.2```
+`https://github.com/xenodorian/Vidja`
 
-This is the command to install the nightly with ROCm 7.2 which might have some performance improvements:
+Do not put the final runtime inside an existing ComfyUI installation. The goal is to create a self-contained Vidja distribution.
 
-```pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/rocm7.2```
+---
 
+# Step 2: Run the Automated Setup
 
-### AMD GPUs (Windows, ROCm 10.0)
+The intended setup script is:
 
-Use AMD's [multi-architecture PyTorch packages](https://rocm.docs.amd.com/projects/ai-ecosystem/en/latest/frameworks/pytorch/install.html). The `device-*` extras install your GPU's kernels and the matching ROCm runtime automatically; a separate HIP SDK installation is not needed.
+`Setup_Vidja_Windows.bat`
 
-Use Windows 11, a current [AMD graphics driver](https://www.amd.com/en/support/download/drivers.html), and 64-bit Python 3.13.
+Run it from Windows.
 
-The install command below uses `device-all` to install kernels for all supported GPUs. To reduce download size and disk usage, optionally replace **both** occurrences of `device-all` with the target for your GPU:
+It is designed to:
 
-| GPU | Device extra |
-| --- | --- |
-| RX 9070 / XT, Radeon AI PRO R9700 | `device-gfx1201` |
-| RX 9060 / XT | `device-gfx1200` |
-| RX 7900 XT / XTX | `device-gfx1100` |
-| RX 7700 XT / 7800 XT | `device-gfx1101` |
-| RX 7600 / XT | `device-gfx1102` |
-| Ryzen AI Max / Max+ (Strix Halo) | `device-gfx1151` |
+1. Download the official NVIDIA portable ComfyUI distribution.
+2. Extract the portable runtime.
+3. Copy the Vidja ComfyUI source and project files into it.
+4. Install ComfyUI-GGUF requirements.
+5. Download the Wan 2.1 diffusion model.
+6. Download the UMT5 XXL text encoder.
+7. Download the Wan VAE.
+8. Place each file in the correct ComfyUI model directory.
 
-**Note:** This table only lists examples. A GPU missing from it may still be supported: supported architectures include RDNA 2, RDNA 3, RDNA 3.5, and RDNA 4. Keep `device-all` to install kernels for all supported targets. For other models, see AMD's [GPU target table](https://github.com/ROCm/TheRock/blob/main/RELEASES.md#gfx-target-lookup-table) and [ROCm compatibility matrix](https://rocm.docs.amd.com/en/docs-10.0.0/compatibility/compatibility-matrix.html).
+The expected model locations are:
 
-**ROCm 10.0.0 with PyTorch 2.13:**
-
-```bat
-pip install --index-url https://stable.repo.amd.com/rocm/whl-next/ "torch[device-all]==2.13.0+rocm10.0.0" "torchvision[device-all]==0.28.0+rocm10.0.0" "torchaudio==2.11.0.2+rocm10.0.0"
+```
+ComfyUI/
+├── models/
+│   ├── unet/
+│   │   └── Wan2.1-T2V-1.3B-Q4_K_S.gguf
+│   ├── clip/
+│   │   └── umt5-xxl-encoder-Q3_K_S.gguf
+│   └── vae/
+│       └── wan_2.1_vae.safetensors
+└── custom_nodes/
+    └── ComfyUI-GGUF/
 ```
 
-### Intel GPUs (Windows and Linux)
+If setup fails, **do not skip the error**. Record the complete error message in `Current_Work.md`.
 
-Intel Arc GPU users can install native PyTorch with torch.xpu support using pip. More information can be found [here](https://pytorch.org/docs/main/notes/get_start_xpu.html)
+---
 
-1. To install PyTorch xpu, use the following command:
+# Step 3: Start ComfyUI
 
-```pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/xpu```
+The portable installation should contain the NVIDIA launcher supplied by ComfyUI.
 
-This is the command to install the Pytorch xpu nightly which might have some performance improvements:
+Start it with:
 
-```pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/xpu```
+`run_nvidia_gpu.bat`
 
-### NVIDIA
+Do not install a separate Python version unless the existing portable runtime fails and the failure specifically requires it.
 
-Nvidia users should install stable pytorch using this command:
+The first verification is simply that ComfyUI starts without Python, CUDA, or custom-node import errors.
 
-```pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu130```
+If ComfyUI starts, open the local web interface it reports in the console.
 
-This is the command to install pytorch nightly instead which might have performance improvements.
+---
 
-```pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu132```
+# Step 4: Verify ComfyUI-GGUF
 
-#### Troubleshooting
+Before attempting generation, verify that the custom node loads.
 
-If you get the "Torch not compiled with CUDA enabled" error, uninstall torch with:
+The workflow requires these node types:
 
-```pip uninstall torch```
+- `UnetLoaderGGUF`
+- `CLIPLoaderGGUF`
 
-And install it again with the command above.
+If either node is reported as missing, stop and fix the custom-node installation before testing the workflow.
 
-### Dependencies
+Do not replace the GGUF nodes with ordinary checkpoint loaders unless the workflow and model format are deliberately changed and retested.
 
-Install the dependencies by opening your terminal inside the ComfyUI folder and:
+---
 
-```pip install -r requirements.txt```
+# Step 5: Verify the Models
 
-After this you should have everything installed and can proceed to running ComfyUI.
+The following three files must exist before running the workflow:
 
-### Others:
+```
+models/unet/Wan2.1-T2V-1.3B-Q4_K_S.gguf
+models/clip/umt5-xxl-encoder-Q3_K_S.gguf
+models/vae/wan_2.1_vae.safetensors
+```
 
-#### Apple Mac silicon
+The workflow should show these files in its model selectors.
 
-You can install ComfyUI in Apple Mac silicon (M1, M2, M3 or M4) with any recent macOS version.
+If a model is missing:
 
-1. Install pytorch nightly. For instructions, read the [Accelerated PyTorch training on Mac](https://developer.apple.com/metal/pytorch/) Apple Developer guide (make sure to install the latest pytorch nightly).
-1. Follow the [ComfyUI manual installation](#manual-install-windows-linux) instructions for Windows and Linux.
-1. Install the ComfyUI [dependencies](#dependencies). If you have another Stable Diffusion UI [you might be able to reuse the dependencies](#i-already-have-another-ui-for-stable-diffusion-installed-do-i-really-have-to-install-all-of-these-dependencies).
-1. Launch ComfyUI by running `python main.py`
+1. Check the filename.
+2. Check the directory.
+3. Restart ComfyUI.
+4. Check the console for model-loading errors.
 
-> **Note**: Remember to add your models, VAE, LoRAs etc. to the corresponding Comfy folders, as discussed in [ComfyUI manual installation](#manual-install-windows-linux).
+Do not rename model files merely to make the selector display them.
 
-#### Ascend NPUs
+---
 
-For models compatible with Ascend Extension for PyTorch (torch_npu). To get started, ensure your environment meets the prerequisites outlined on the [installation](https://ascend.github.io/docs/sources/ascend/quick_install.html) page. Here's a step-by-step guide tailored to your platform and installation method:
+# Step 6: Load the Included Workflow
 
-1. Begin by installing the recommended or newer kernel version for Linux as specified in the Installation page of torch-npu, if necessary.
-2. Proceed with the installation of Ascend Basekit, which includes the driver, firmware, and CANN, following the instructions provided for your specific platform.
-3. Next, install the necessary packages for torch-npu by adhering to the platform-specific instructions on the [Installation](https://ascend.github.io/docs/sources/pytorch/install.html#pytorch) page.
-4. Finally, adhere to the [ComfyUI manual installation](#manual-install-windows-linux) guide for Linux. Once all components are installed, you can run ComfyUI as described earlier.
+In ComfyUI, load:
 
-#### Cambricon MLUs
+`workflows/wan2.1_t2v_1.3b_gguf_3060.json`
 
-For models compatible with Cambricon Extension for PyTorch (torch_mlu). Here's a step-by-step guide tailored to your platform and installation method:
+The graph should contain:
 
-1. Install the Cambricon CNToolkit by adhering to the platform-specific instructions on the [Installation](https://www.cambricon.com/docs/sdk_1.15.0/cntoolkit_3.7.2/cntoolkit_install_3.7.2/index.html)
-2. Next, install the PyTorch(torch_mlu) following the instructions on the [Installation](https://www.cambricon.com/docs/sdk_1.15.0/cambricon_pytorch_1.17.0/user_guide_1.9/index.html)
-3. Launch ComfyUI by running `python main.py`
+- GGUF diffusion model loader
+- GGUF UMT5 loader
+- Wan VAE loader
+- Positive prompt
+- Negative prompt
+- Video latent
+- KSampler
+- Video creation
+- Video save
 
-#### Iluvatar Corex
+The initial settings are deliberately conservative for the RTX 3060 target.
 
-For models compatible with Iluvatar Extension for PyTorch. Here's a step-by-step guide tailored to your platform and installation method:
+---
 
-1. Install the Iluvatar Corex Toolkit by adhering to the platform-specific instructions on the [Installation](https://support.iluvatar.com/#/DocumentCentre?id=1&nameCenter=2&productId=520117912052801536)
-2. Launch ComfyUI by running `python main.py`
+# Step 7: Run a Short Test First
 
+Do not immediately spend a long time rendering the full configured output.
 
-## [ComfyUI-Manager](https://github.com/Comfy-Org/ComfyUI-Manager/tree/manager-v4)
+First reduce the video length to a small test, if necessary.
 
-**ComfyUI-Manager** is an extension that allows you to easily install, update, and manage custom nodes for ComfyUI.
+For example, reduce the frame count in the video latent node to approximately 17 frames.
 
-### Setup
+Use a simple prompt such as:
 
-1. Install the manager dependencies:
-   ```bash
-   pip install -r manager_requirements.txt
-   ```
+```
+a red ball rolling across a wooden table, fixed camera, realistic motion
+```
 
-2. Enable the manager with the `--enable-manager` flag when running ComfyUI:
-   ```bash
-   python main.py --enable-manager
-   ```
+Queue the workflow.
 
-### Command Line Options
+The first successful test must demonstrate all of the following:
 
-| Flag | Description |
-|------|-------------|
-| `--enable-manager` | Enable ComfyUI-Manager |
-| `--enable-manager-legacy-ui` | Use the legacy manager UI instead of the new UI (implies `--enable-manager`) |
-| `--disable-manager-ui` | Disable the manager UI and endpoints while keeping background features like security checks and scheduled installation completion (requires `--enable-manager`) |
+- The GGUF diffusion model loads.
+- The UMT5 encoder loads.
+- Sampling completes.
+- The VAE decodes successfully.
+- Video creation completes.
+- A video file is written.
+- The resulting video can actually be opened and played.
 
+A workflow that merely reaches the end of the node graph without producing a playable file does not count as success.
 
-# Running
+---
 
-```python main.py```
+# Step 8: If It Runs Out Of VRAM
 
-### For AMD cards not officially supported by ROCm
+The RTX 3060 has 12 GB of VRAM.
 
-Try running it with this command if you have issues:
+If the workflow produces a CUDA out-of-memory error:
 
-For 6700, 6600 and maybe other RDNA2 or older: ```HSA_OVERRIDE_GFX_VERSION=10.3.0 python main.py```
+1. Record the exact error.
+2. Reduce the frame count.
+3. Retry.
+4. If necessary, reduce resolution.
+5. Retry.
+6. Only change model quantization after the simpler changes have been tested.
 
-For AMD 7600 and maybe other RDNA3 cards: ```HSA_OVERRIDE_GFX_VERSION=11.0.0 python main.py```
+Do not immediately replace the entire workflow.
 
-### AMD ROCm Tips
+The purpose of the first successful run is to establish a known working baseline.
 
-You can try setting this env variable `PYTORCH_TUNABLEOP_ENABLED=1` which might speed things up at the cost of a very slow initial run.
+Once a baseline works, increase the frame count and resolution toward the configured 832x480 / 33-frame target.
 
-# Notes
+Record the highest settings that successfully work.
 
-Only parts of the graph that have an output with all the correct inputs will be executed.
+---
 
-Only parts of the graph that change from each execution to the next will be executed, if you submit the same graph twice only the first will be executed. If you change the last part of the graph only the part you changed and the part that depends on it will be executed.
+# Step 9: If the Workflow Fails
 
-Dragging a generated png on the webpage or loading one will give you the full workflow including seeds that were used to create it.
+When something fails, use this procedure:
 
-You can use () to change emphasis of a word or phrase like: (good code:1.2) or (bad code:0.8). The default emphasis for () is 1.1. To use () characters in your actual prompt escape them like \\( or \\).
+### Missing node
 
-You can use {day|night}, for wildcard/dynamic prompts. With this syntax "{wild|card|test}" will be randomly replaced by either "wild", "card" or "test" by the frontend every time you queue the prompt. To use {} characters in your actual prompt escape them like: \\{ or \\}.
+Check:
 
-Dynamic prompts also support C-style comments, like `// comment` or `/* comment */`.
+`custom_nodes/ComfyUI-GGUF`
 
-To use a textual inversion concepts/embeddings in a text prompt put them in the models/embeddings directory and use them in the CLIPTextEncode node like this (you can omit the .pt extension):
+Then restart ComfyUI.
 
-```embedding:embedding_filename.pt```
+### Missing model
 
+Check the exact model filename and directory.
 
-## How to show high-quality previews?
+### CUDA error
 
-Use ```--preview-method auto``` to enable previews.
+Record the complete console error and determine whether it is:
 
-The default installation includes a fast latent preview method that's low-resolution. To enable higher-quality previews with [TAESD](https://github.com/madebyollin/taesd), download the [taesd_decoder.pth, taesdxl_decoder.pth, taesd3_decoder.pth and taef1_decoder.pth](https://github.com/madebyollin/taesd/) and place them in the `models/vae_approx` folder. Once they're installed, restart ComfyUI and launch it with `--preview-method taesd` to enable high-quality previews.
+- VRAM exhaustion
+- incompatible CUDA/PyTorch
+- unsupported GPU operation
+- driver failure
 
-## How to use TLS/SSL?
-Generate a self-signed certificate (not appropriate for shared/production use) and key by running the command: `openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -sha256 -days 3650 -nodes -subj "/C=XX/ST=StateName/L=CityName/O=CompanyName/OU=CompanySectionName/CN=CommonNameOrHostname"`
+### Python/import error
 
-Use `--tls-keyfile key.pem --tls-certfile cert.pem` to enable TLS/SSL, the app will now be accessible with `https://...` instead of `http://...`.
+Record the complete traceback.
 
-> Note: Windows users can use [alexisrolland/docker-openssl](https://github.com/alexisrolland/docker-openssl) or one of the [3rd party binary distributions](https://wiki.openssl.org/index.php/Binaries) to run the command example above.
-<br/><br/>If you use a container, note that the volume mount `-v` can be a relative path so `... -v ".\:/openssl-certs" ...` would create the key & cert files in the current directory of your command prompt or powershell terminal.
+Do not randomly install packages into the system Python. The final package must remain portable.
 
-## Support and dev channel
+### Workflow/node error
 
-[Discord](https://comfy.org/discord): Try the #help or #feedback channels.
+Record:
 
-[Matrix space: #comfyui_space:matrix.org](https://app.element.io/#/room/%23comfyui_space%3Amatrix.org) (it's like discord but open source).
+- Node name
+- Error text
+- Input values
+- ComfyUI version
+- Custom-node version
 
-See also: [https://www.comfy.org/](https://www.comfy.org/)
+Then fix the smallest component necessary and rerun the test.
 
-> _psst — we're hiring!_ Help build ComfyUI: [comfy.org/careers](https://www.comfy.org/careers)
+Every failed attempt that changes the project should be recorded in `Current_Work.md`.
 
-## Frontend Development
+---
 
-As of August 15, 2024, we have transitioned to a new frontend, which is now hosted in a separate repository: [ComfyUI Frontend](https://github.com/Comfy-Org/ComfyUI_frontend). The compiled JS files (from TS/Vue) are published to [pypi](https://pypi.org/project/comfyui-frontend-package) and installed as a dependency in ComfyUI.
+# Step 10: Prove the Runtime Is Portable
 
-### Reporting Issues and Requesting Features
+After a successful generation, do not immediately create the final ZIP.
 
-For any bugs, issues, or feature requests related to the frontend, please use the [ComfyUI Frontend repository](https://github.com/Comfy-Org/ComfyUI_frontend). This will help us manage and address frontend-specific concerns more efficiently.
+First test the runtime from a different directory.
 
-### Using the Latest Frontend
+For example:
 
-The new frontend is now the default for ComfyUI. However, please note:
+```
+C:\VidjaTest\
+```
 
-1. The frontend in the main ComfyUI repository is updated fortnightly.
-2. Daily releases are available in the separate frontend repository.
+Copy/extract the complete prepared runtime there.
 
-To use the most up-to-date frontend version:
+Launch it from that location.
 
-1. For the latest daily release, launch ComfyUI with this command line argument:
+Verify that it does not depend on:
 
-   ```
-   --front-end-version Comfy-Org/ComfyUI_frontend@latest
-   ```
+- The original project directory
+- Your user profile
+- A separate Python installation
+- A separate ComfyUI installation
+- Developer-specific absolute paths
+- Files outside the package
 
-2. For a specific version, replace `latest` with the desired version number:
+Then run the workflow again.
 
-   ```
-   --front-end-version Comfy-Org/ComfyUI_frontend@1.2.2
-   ```
+This second generation is the portability test.
 
-This approach allows you to easily switch between the stable fortnightly release and the cutting-edge daily updates, or even specific versions for testing purposes.
+---
 
-# QA
+# Step 11: Package the Final ZIP
 
-### Which GPU should I buy for this?
+Once the workflow has successfully generated video and the extracted copy has also generated video, run:
 
-[See this page for some recommendations](https://github.com/comfyanonymous/ComfyUI/wiki/Which-GPU-should-I-buy-for-ComfyUI)
+`Package_Vidja.bat`
+
+The intended output is:
+
+`Vidja_ComfyUI_Ready.zip`
+
+The ZIP must contain the complete tested runtime, not merely the Git repository.
+
+It must include:
+
+```
+ComfyUI/
+models/
+custom_nodes/
+workflows/
+launcher/setup files
+documentation
+Current_Work.md
+```
+
+It must also include the actual model files.
+
+Do not create a ZIP that merely downloads the models later and call it the completed deliverable.
+
+---
+
+# Step 12: Final Clean Extraction Test
+
+Before declaring success:
+
+1. Create a completely new directory.
+2. Extract `Vidja_ComfyUI_Ready.zip`.
+3. Launch it using the included launcher.
+4. Open the included workflow.
+5. Generate a video.
+6. Open the resulting video.
+7. Confirm that no files outside the extracted package were required.
+
+Only after this test should `Current_Work.md` mark the project complete.
+
+---
+
+# Files Used By This Project
+
+The important project files are:
+
+```
+Current_Work.md
+workflows/wan2.1_t2v_1.3b_gguf_3060.json
+Setup_Vidja_Windows.bat
+Package_Vidja.bat
+```
+
+If the setup or packaging BAT files are missing from the repository, restore them before attempting the final packaging stage. They are part of the intended automated build process.
+
+---
+
+# Model Sources
+
+The current workflow was built around these model sources:
+
+Wan 2.1 T2V 1.3B GGUF:
+
+`https://huggingface.co/samuelchristlie/Wan2.1-T2V-1.3B-GGUF`
+
+UMT5 XXL GGUF:
+
+`https://huggingface.co/city96/umt5-xxl-encoder-gguf`
+
+Wan 2.1 VAE:
+
+`https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged`
+
+GGUF custom node:
+
+`https://github.com/city96/ComfyUI-GGUF`
+
+Official ComfyUI:
+
+`https://github.com/Comfy-Org/ComfyUI`
+
+These sources are listed so that a failed download can be diagnosed and reproduced.
+
+---
+
+# What Counts As Completion
+
+The objective is complete only when all of these are true:
+
+- [ ] ComfyUI starts from the packaged runtime.
+- [ ] ComfyUI-GGUF loads without errors.
+- [ ] All required model files are present.
+- [ ] The included workflow loads without missing nodes.
+- [ ] The workflow successfully generates a video.
+- [ ] The generated video is playable.
+- [ ] The packaged copy works from a new directory.
+- [ ] The final ZIP contains the actual runtime and models.
+- [ ] The final ZIP works without relying on the development directory.
+- [ ] `Current_Work.md` records the successful test and final ZIP size/location.
+
+Do not mark any unchecked item complete based on assumption.
+
+---
+
+# Handoff Rule
+
+If work stops before completion, update `Current_Work.md` with:
+
+1. What was completed.
+2. What failed.
+3. The exact error.
+4. What was changed.
+5. What remains.
+6. The exact next command or action.
+
+The next AI should read `Current_Work.md` first, inspect the repository second, and continue from the first incomplete item.
+
+The end goal is not a source repository.
+
+**The end goal is a tested, self-contained Windows ZIP that can be extracted and used to generate video.**

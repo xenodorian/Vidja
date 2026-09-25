@@ -101,6 +101,28 @@ def wait_generation(prompt_id, timeout=3600):
         time.sleep(3)
     raise TimeoutError("ComfyUI generation timed out")
 
+def package_runtime():
+    out_zip = ROOT / "Vidja_ComfyUI_Ready.zip"
+    if out_zip.exists():
+        out_zip.unlink()
+    test_output = PORTABLE / "ComfyUI" / "output"
+    if test_output.exists():
+        # The smoke-test video proves generation worked but is not required in the
+        # distributable runtime.
+        shutil.rmtree(test_output)
+    log("Packaging the complete tested runtime. This may take several minutes.")
+    count = 0
+    with zipfile.ZipFile(out_zip, "w", compression=zipfile.ZIP_STORED, allowZip64=True) as z:
+        for p in PORTABLE.rglob("*"):
+            if p.is_file():
+                rel = p.relative_to(PORTABLE)
+                z.write(p, rel.as_posix())
+                count += 1
+                if count % 5000 == 0:
+                    log(f"Packaged {count} files...")
+    log(f"Final package created: {out_zip} ({out_zip.stat().st_size} bytes)")
+    return out_zip
+
 def main():
     LOG.write_text("", encoding="utf-8")
     log("Starting fully automatic Vidja setup.")
@@ -197,12 +219,16 @@ def main():
         raise RuntimeError("Generation reported success but no video file was found.")
     log("Verified generated video: "+str(videos[0]))
 
-    # 8. Open the UI. Leave the server running for immediate use.
+    # 8. Automatically build the final self-contained ZIP after the smoke test.
+    final_zip = package_runtime()
+
+    # 9. Open the UI. Leave the server running for immediate use.
     webbrowser.open("http://127.0.0.1:8188")
     log("Vidja is ready. ComfyUI remains running.")
     print("\nVIDJA SETUP COMPLETE")
     print("A real automatic Wan GPU smoke test succeeded.")
     print("Generated test video: "+str(videos[0]))
+    print("Final package: "+str(final_zip))
     print("ComfyUI: http://127.0.0.1:8188")
 
 if __name__=="__main__":

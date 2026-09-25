@@ -1,45 +1,62 @@
 @echo off
 setlocal
 cd /d "%~dp0"
+set "BOOT=%~dp0_bootstrap_python"
+set "PYZIP=%~dp0_downloads\python-3.13.15-embed-amd64.zip"
+
 echo.
 echo ============================================================
 echo VIDJA AUTOMATIC SETUP
 echo ============================================================
-echo This is the only setup step. It downloads, installs,
-echo configures, tests, and launches the Vidja ComfyUI runtime.
+echo One-click mode: downloading, installing, verifying,
+echo GPU-testing, and launching Vidja automatically.
 echo.
-where curl.exe >nul 2>&1 || (
-  echo ERROR: Windows curl.exe is required.
-  pause
-  exit /b 1
-)
-where powershell.exe >nul 2>&1 || (
-  echo ERROR: Windows PowerShell is required.
-  pause
-  exit /b 1
-)
+
 if not exist "%~dp0vidja_setup.py" (
   echo ERROR: vidja_setup.py is missing.
   pause
   exit /b 1
 )
-powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$p=Get-Command python.exe -ErrorAction SilentlyContinue; if($p){& $p.Source '%~dp0vidja_setup.py'; exit $LASTEXITCODE}else{exit 9009}"
-if %ERRORLEVEL% EQU 9009 (
-  echo No system Python was found. Downloading the official Python launcher is unnecessary:
-  echo Vidja will use the embedded Python supplied by ComfyUI after extraction.
-  echo.
-  echo ERROR: The bootstrap helper requires a system Python 3.10+.
-  echo Install Python from python.org with the launcher enabled, then rerun this file.
+
+where curl.exe >nul 2>&1 || (
+  echo ERROR: Windows curl.exe is required.
   pause
   exit /b 1
 )
-if not %ERRORLEVEL% EQU 0 (
+
+if not exist "%BOOT%\python.exe" (
+  echo Downloading isolated Python bootstrap...
+  if not exist "%~dp0_downloads" mkdir "%~dp0_downloads"
+  curl.exe -L --fail --retry 8 --retry-delay 3 "https://www.python.org/ftp/python/3.13.15/python-3.13.15-embed-amd64.zip" -o "%PYZIP%"
+  if errorlevel 1 (
+    echo ERROR: Could not download Python.
+    pause
+    exit /b 1
+  )
+  if exist "%BOOT%" rmdir /s /q "%BOOT%"
+  mkdir "%BOOT%"
+  powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Expand-Archive -LiteralPath '%PYZIP%' -DestinationPath '%BOOT%' -Force"
+  if errorlevel 1 (
+    echo ERROR: Could not extract Python.
+    pause
+    exit /b 1
+  )
+)
+
+"%BOOT%\python.exe" "%~dp0vidja_setup.py"
+if errorlevel 1 (
   echo.
-  echo VIDJA SETUP FAILED. See Vidja_Setup.log for the exact failure.
+  echo VIDJA SETUP FAILED.
+  echo See Vidja_Setup.log and Vidja_ComfyUI.log for exact diagnostics.
   pause
   exit /b 1
 )
+
 echo.
-echo VIDJA SETUP COMPLETED.
-echo ComfyUI should now be running and the browser should be open.
+echo ============================================================
+echo VIDJA SETUP COMPLETE
+echo ============================================================
+echo A real Wan GPU smoke test has completed successfully.
+echo ComfyUI is running at http://127.0.0.1:8188
+echo.
 pause

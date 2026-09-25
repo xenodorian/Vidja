@@ -1,0 +1,45 @@
+{
+  "project": "Vidja",
+  "target": "Windows NVIDIA RTX 3060 12GB",
+  "workflow": "workflows/wan2.1_t2v_1.3b_gguf_3060.json",
+  "runtime": {
+    "url": "https://github.com/Comfy-Org/ComfyUI/releases/latest/download/ComfyUI_windows_portable_nvidia.7z",
+    "type": "official ComfyUI Windows portable NVIDIA build"
+  },
+  "models": [
+    {
+      "name": "Wan2.1-T2V-1.3B-Q4_K_S.gguf",
+      "type": "diffusion_model_gguf",
+      "destination": "ComfyUI/models/unet/",
+      "url": "https://huggingface.co/samuelchristlie/Wan2.1-T2V-1.3B-GGUF/resolve/main/Wan2.1-T2V-1.3B-Q4_K_S.gguf?download=true",
+      "size_bytes": 892565728,
+      "sha256": "9fa296a9ee5433750cd59cc451c169af735c9d7c0c4459c5e645da6903cc15fa",
+      "license": "Apache-2.0"
+    },
+    {
+      "name": "umt5-xxl-encoder-Q3_K_S.gguf",
+      "type": "text_encoder_gguf",
+      "destination": "ComfyUI/models/clip/",
+      "url": "https://huggingface.co/city96/umt5-xxl-encoder-gguf/resolve/main/umt5-xxl-encoder-Q3_K_S.gguf?download=true",
+      "license": "Apache-2.0"
+    },
+    {
+      "name": "wan_2.1_vae.safetensors",
+      "type": "vae",
+      "destination": "ComfyUI/models/vae/",
+      "url": "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/vae/wan_2.1_vae.safetensors?download=true"
+    }
+  ],
+  "custom_nodes": [
+    {
+      "name": "ComfyUI-GGUF",
+      "source": "https://github.com/city96/ComfyUI-GGUF",
+      "path": "ComfyUI/custom_nodes/ComfyUI-GGUF"
+    }
+  ],
+  "notes": [
+    "The selected workflow is a hardware-targeted starting point, not yet an end-to-end verified RTX 3060 generation.",
+    "The final package must not be marked complete until an actual video has been generated successfully on the target hardware.",
+    "Model paths are deliberately aligned with current ComfyUI legacy folder mappings and the ComfyUI-GGUF loader implementation."
+  ]
+}

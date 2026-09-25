@@ -280,7 +280,7 @@ When taking over this project:
 
 ## Current Handoff
 
-Status: Phase 1 ComfyUI source transfer completed. A first GitHub Actions bootstrap run successfully cloned and copied 1,154 ComfyUI files but failed only at the final push because this handoff file was updated concurrently. The bootstrap workflow has since been simplified to avoid that race. The workflow now rebases against the current remote main immediately before pushing the imported source.
+Status: Phase 1 source transfer completed; preserving Vidja workflow/custom-node assets is now part of the bootstrap. A first GitHub Actions bootstrap run successfully cloned and copied 1,154 ComfyUI files but failed only at the final push because this handoff file was updated concurrently. The bootstrap workflow has since been simplified to avoid that race. The workflow now rebases against the current remote main immediately before pushing the imported source.
 
 Completed in this stage:
 - Added `.github/workflows/bootstrap-comfyui.yml`.

@@ -280,9 +280,23 @@ When taking over this project:
 
 ## Current Handoff
 
-Status: Planning and repository setup stage.
+Status: Phase 1 bootstrap automation added.
+
+Completed in this stage:
+- Added `.github/workflows/bootstrap-comfyui.yml`.
+- The workflow is designed to clone the official `Comfy-Org/ComfyUI` source on GitHub Actions and copy it into Vidja while preserving `Current_Work.md` and the Vidja bootstrap workflow.
+- The workflow requests `contents: write` and commits the imported source back to `main`.
+
+Verification:
+- The workflow file is present on `main`.
+- The official ComfyUI recursive tree is available and confirmed non-truncated.
+- Direct GitHub API object reuse was tested and rejected because upstream blob objects are not present in Vidja.
+- Local container access cannot reach GitHub and has no authenticated GitHub CLI, so GitHub Actions is being used as the transfer mechanism.
+
+Current blocker:
+- The repository currently reports zero GitHub Actions workflow runs. The bootstrap workflow therefore has not yet been verified as executing.
 
 First unfinished task:
-Transfer the real current ComfyUI source into `xenodorian/Vidja`, then establish the runtime.
+Verify or trigger the bootstrap workflow and confirm that the real ComfyUI source appears in Vidja. If Actions cannot be triggered through the available connector, find another authenticated transfer mechanism before attempting model/runtime packaging.
 
 Do not proceed to final packaging until the actual ComfyUI runtime and at least one complete generation workflow have been successfully tested.

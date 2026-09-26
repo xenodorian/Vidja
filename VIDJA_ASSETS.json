@@ -1,0 +1,31 @@
+{
+  "portable_runtime": {
+    "name": "ComfyUI_windows_portable_nvidia.7z",
+    "url": "https://github.com/Comfy-Org/ComfyUI/releases/latest/download/ComfyUI_windows_portable_nvidia.7z",
+    "note": "Official Windows NVIDIA portable. Prefer the latest release asset named ComfyUI_windows_portable_nvidia.7z"
+  },
+  "models": [
+    {
+      "name": "Wan2.1-T2V-1.3B-Q4_K_S.gguf",
+      "url": "https://huggingface.co/samuelchristlie/Wan2.1-T2V-1.3B-GGUF/resolve/main/Wan2.1-T2V-1.3B-Q4_K_S.gguf?download=true",
+      "directory": "diffusion_models",
+      "sha256": null
+    },
+    {
+      "name": "umt5-xxl-encoder-Q3_K_S.gguf",
+      "url": "https://huggingface.co/city96/umt5-xxl-encoder-gguf/resolve/main/umt5-xxl-encoder-Q3_K_S.gguf?download=true",
+      "directory": "text_encoders",
+      "sha256": null
+    },
+    {
+      "name": "wan_2.1_vae.safetensors",
+      "url": "https://huggingface.co/Comfy-Org/Wan_2.1_ComfyUI_repackaged/resolve/main/split_files/vae/wan_2.1_vae.safetensors?download=true",
+      "directory": "vae",
+      "sha256": null
+    }
+  ],
+  "workflow": "workflows/wan2.1_t2v_1.3b_gguf_3060.json",
+  "custom_nodes": [
+    "custom_nodes/ComfyUI-GGUF"
+  ]
+}

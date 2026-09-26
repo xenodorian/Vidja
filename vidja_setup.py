@@ -87,6 +87,54 @@ def sha256_file(path: Path) -> str:
     return h.hexdigest()
 
 
+def find_7z() -> str | None:
+    """Locate 7z/7za/7zr on PATH, common install dirs, or a local tools copy."""
+    for name in ("7z", "7z.exe", "7za", "7za.exe", "7zr", "7zr.exe"):
+        found = shutil.which(name)
+        if found:
+            return found
+    candidates = [
+        Path(os.environ.get("ProgramFiles", r"C:\Program Files")) / "7-Zip" / "7z.exe",
+        Path(os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")) / "7-Zip" / "7z.exe",
+        Path(os.environ.get("LOCALAPPDATA", "")) / "Programs" / "7-Zip" / "7z.exe",
+        ROOT / "tools" / "7zr.exe",
+        ROOT / "tools" / "7za.exe",
+        ROOT / "tools" / "7z.exe",
+    ]
+    for p in candidates:
+        if p and p.is_file():
+            return str(p)
+    return None
+
+
+def ensure_7zr() -> str:
+    """Return path to a usable 7z binary, downloading standalone 7zr.exe if needed."""
+    existing = find_7z()
+    if existing:
+        return existing
+    tools = ROOT / "tools"
+    tools.mkdir(parents=True, exist_ok=True)
+    dest = tools / "7zr.exe"
+    # Official standalone console binary (public domain, from 7-zip.org)
+    # 7zr is the reduced standalone that can extract .7z archives.
+    url = "https://www.7-zip.org/a/7zr.exe"
+    log(f"7-Zip not found. Downloading standalone 7zr.exe from {url}")
+    try:
+        download(url, dest, "7zr.exe")
+    except SystemExit:
+        raise
+    except Exception as e:
+        die(
+            "Could not download 7zr.exe automatically. "
+            "Install 7-Zip from https://www.7-zip.org/ and re-run, or place 7zr.exe in the tools\\ folder. "
+            f"Error: {e}"
+        )
+    if not dest.is_file() or dest.stat().st_size < 1000:
+        die("Downloaded 7zr.exe looks invalid. Install 7-Zip from https://www.7-zip.org/ and re-run.")
+    log(f"Using bundled extractor: {dest}")
+    return str(dest)
+
+
 def extract_7z_or_zip(archive: Path, dest: Path) -> None:
     dest.mkdir(parents=True, exist_ok=True)
     if archive.suffix.lower() == ".zip":
@@ -94,18 +142,15 @@ def extract_7z_or_zip(archive: Path, dest: Path) -> None:
         with zipfile.ZipFile(archive, "r") as zf:
             zf.extractall(dest)
         return
-    # Prefer 7z if available, else try PowerShell / tar
-    seven = shutil.which("7z") or shutil.which("7za")
-    if seven:
-        log(f"Extracting with 7z: {archive.name}")
-        r = subprocess.run([seven, "x", str(archive), f"-o{dest}", "-y"], capture_output=True, text=True)
-        if r.returncode != 0:
-            die(f"7z extract failed: {r.stderr or r.stdout}")
-        return
-    # Windows: try Expand-Archive only works for zip; for 7z require 7-Zip
-    log("7-Zip not found on PATH. Attempting to use PowerShell + 7z COM is unreliable.")
-    log("Please install 7-Zip (https://www.7-zip.org/) and ensure 7z.exe is on PATH, then re-run.")
-    die("Cannot extract .7z without 7-Zip")
+    seven = ensure_7zr()
+    log(f"Extracting with {seven}: {archive.name}")
+    r = subprocess.run(
+        [seven, "x", str(archive), f"-o{dest}", "-y"],
+        capture_output=True,
+        text=True,
+    )
+    if r.returncode != 0:
+        die(f"7z extract failed (code {r.returncode}): {r.stderr or r.stdout}")
 
 
 def find_portable_root() -> Path:

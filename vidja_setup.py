@@ -115,8 +115,6 @@ def ensure_7zr() -> str:
     tools = ROOT / "tools"
     tools.mkdir(parents=True, exist_ok=True)
     dest = tools / "7zr.exe"
-    # Official standalone console binary (public domain, from 7-zip.org)
-    # 7zr is the reduced standalone that can extract .7z archives.
     url = "https://www.7-zip.org/a/7zr.exe"
     log(f"7-Zip not found. Downloading standalone 7zr.exe from {url}")
     try:
@@ -144,20 +142,23 @@ def extract_7z_or_zip(archive: Path, dest: Path) -> None:
         return
     seven = ensure_7zr()
     log(f"Extracting with {seven}: {archive.name}")
-    r = subprocess.run(
-        [seven, "x", str(archive), f"-o{dest}", "-y"],
-        capture_output=True,
-        text=True,
-    )
+    log("Large archive — this can take several minutes. 7-Zip progress will stream below.")
+    # Stream output so the console is not silent for multi-GB extracts.
+    # -bsp1 enables progress on stdout for modern 7-Zip.
+    cmd = [seven, "x", str(archive), f"-o{dest}", "-y", "-bsp1"]
+    r = subprocess.run(cmd)
     if r.returncode != 0:
-        die(f"7z extract failed (code {r.returncode}): {r.stderr or r.stdout}")
+        log("Retrying extract without progress switch...")
+        r = subprocess.run([seven, "x", str(archive), f"-o{dest}", "-y"])
+        if r.returncode != 0:
+            die(f"7z extract failed (code {r.returncode})")
+    log(f"Extraction finished into {dest}")
 
 
 def find_portable_root() -> Path:
     """After extract, locate the folder that contains python_embeded and ComfyUI."""
     if (PORTABLE_DIR / "python_embeded").is_dir() and (PORTABLE_DIR / "ComfyUI").is_dir():
         return PORTABLE_DIR
-    # Sometimes extract creates an extra nested folder
     for child in PORTABLE_DIR.iterdir():
         if child.is_dir() and (child / "python_embeded").is_dir() and (child / "ComfyUI").is_dir():
             return child
@@ -178,7 +179,6 @@ def ensure_portable(assets: dict) -> Path:
     extract_7z_or_zip(archive, PORTABLE_DIR)
     root = find_portable_root()
     if root != PORTABLE_DIR:
-        # Flatten nested folder
         log(f"Flattening nested portable root: {root}")
         for item in list(root.iterdir()):
             target = PORTABLE_DIR / item.name
@@ -244,7 +244,6 @@ def install_workflow(root: Path) -> Path:
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest = dest_dir / WORKFLOW_SRC.name
     shutil.copy2(WORKFLOW_SRC, dest)
-    # Also place a copy at top-level workflows for convenience
     alt = root / "ComfyUI" / "workflows"
     alt.mkdir(parents=True, exist_ok=True)
     shutil.copy2(WORKFLOW_SRC, alt / WORKFLOW_SRC.name)
@@ -278,8 +277,6 @@ def start_comfy(root: Path, py: Path) -> subprocess.Popen:
 
 
 def wait_for_comfy(timeout: int = 180) -> None:
-    import urllib.error
-
     url = f"http://{COMFY_HOST}:{COMFY_PORT}/system_stats"
     deadline = time.time() + timeout
     while time.time() < deadline:
@@ -295,41 +292,28 @@ def wait_for_comfy(timeout: int = 180) -> None:
 
 
 def smoke_test_workflow() -> dict:
-    """Minimal graph: same loaders as the full workflow, 9 frames / 4 steps."""
-    # Reuse the full workflow JSON and patch frame count / steps for speed.
     data = json.loads(WORKFLOW_SRC.read_text(encoding="utf-8"))
     for node in data.get("nodes", []):
         if node.get("type") == "EmptyHunyuanLatentVideo":
-            # width, height, length, batch
             node["widgets_values"] = [832, 480, 9, 1]
         if node.get("type") == "KSampler":
-            # seed, control, steps, cfg, sampler, scheduler, denoise
             wv = node.get("widgets_values") or [0, "randomize", 30, 6, "uni_pc", "simple", 1]
-            wv[2] = 4  # steps
+            wv[2] = 4
             node["widgets_values"] = wv
     return data
 
 
 def queue_prompt(workflow: dict) -> str:
-    """Convert UI workflow format to API prompt and queue it."""
-    # Prefer using the workflow as-is via /prompt if already API shape;
-    # otherwise convert nodes/links to the API format.
     prompt = {}
     if "nodes" in workflow:
-        # UI format -> API format
-        id_map = {}
         for node in workflow["nodes"]:
             nid = str(node["id"])
             inputs = {}
-            # widget values in order of input widgets (best-effort)
             wvals = list(node.get("widgets_values") or [])
-            # Linked inputs
             for inp in node.get("inputs") or []:
                 link = inp.get("link")
                 if link is not None:
-                    # resolve later
                     inputs[inp["name"]] = ("LINK", link)
-            # Assign remaining widget values to common names by node type
             t = node.get("type")
             if t in ("UnetLoaderGGUF", "CLIPLoaderGGUF", "VAELoader"):
                 if wvals:
@@ -345,16 +329,7 @@ def queue_prompt(workflow: dict) -> str:
                 if wvals:
                     inputs["text"] = wvals[0]
             elif t == "KSampler":
-                keys = ["seed", "seed_control", "steps", "cfg", "sampler_name", "scheduler", "denoise"]
-                # API uses control_after_generate separately; map common fields
-                mapping = {
-                    "seed": 0,
-                    "steps": 2,
-                    "cfg": 3,
-                    "sampler_name": 4,
-                    "scheduler": 5,
-                    "denoise": 6,
-                }
+                mapping = {"seed": 0, "steps": 2, "cfg": 3, "sampler_name": 4, "scheduler": 5, "denoise": 6}
                 for k, idx in mapping.items():
                     if idx < len(wvals):
                         inputs[k] = wvals[idx]
@@ -371,13 +346,10 @@ def queue_prompt(workflow: dict) -> str:
                         inputs["format"] = wvals[1]
                     if len(wvals) > 2:
                         inputs["codec"] = wvals[2]
-
             prompt[nid] = {"class_type": t, "inputs": inputs}
 
-        # Resolve links
-        link_src = {}  # link_id -> (node_id, output_slot)
+        link_src = {}
         for link in workflow.get("links") or []:
-            # [link_id, src_node, src_slot, dst_node, dst_slot, type]
             if len(link) >= 5:
                 link_src[link[0]] = (str(link[1]), link[2])
 
@@ -426,7 +398,7 @@ def wait_for_history(prompt_id: str, timeout: int = 900) -> dict:
     die("Timed out waiting for smoke-test generation")
 
 
-def find_video_outputs(root: Path) -> list[Path]:
+def find_video_outputs(root: Path) -> list:
     out_dir = root / "ComfyUI" / "output"
     videos = []
     if out_dir.is_dir():
@@ -440,11 +412,9 @@ def package_ready(root: Path) -> None:
     if READY_ZIP.exists():
         READY_ZIP.unlink()
     log(f"Creating {READY_ZIP}")
-    # Zip the portable root contents
     with zipfile.ZipFile(READY_ZIP, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=1) as zf:
         for path in root.rglob("*"):
             if path.is_file():
-                # Skip huge temp / log noise if any
                 if path.suffix.lower() in {".partial", ".log"} and path.name.startswith("Vidja_"):
                     continue
                 arc = path.relative_to(root)
@@ -487,7 +457,6 @@ def main() -> int:
         package_ready(root)
         open_browser()
         log("Setup complete. ComfyUI is still running. Close the window or Ctrl+C to stop.")
-        # Keep process alive so the user can interact
         try:
             proc.wait()
         except KeyboardInterrupt:
